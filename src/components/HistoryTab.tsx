@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IndianRupee, Trash2, Save, Clock, Calculator } from 'lucide-react';
+import { IndianRupee, Trash2, Save, Clock, Calculator, DollarSign } from 'lucide-react';
 
 interface HistoryEntry {
   id: string;
@@ -8,6 +8,7 @@ interface HistoryEntry {
   totalCount: number;
   denominationCounts: Record<number, number>;
   note?: string;
+  currency: 'INR' | 'USD';
 }
 
 interface CalculatorHistory {
@@ -18,11 +19,12 @@ interface CalculatorHistory {
 
 interface HistoryTabProps {
   hideAmounts: boolean;
+  selectedCurrency: 'INR' | 'USD';
 }
 
 type HistoryType = 'money' | 'calculator';
 
-const HistoryTab: React.FC<HistoryTabProps> = ({ hideAmounts }) => {
+const HistoryTab: React.FC<HistoryTabProps> = ({ hideAmounts, selectedCurrency }) => {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [calculatorHistory, setCalculatorHistory] = useState<CalculatorHistory[]>([]);
   const [selectedEntry, setSelectedEntry] = useState<HistoryEntry | null>(null);
@@ -31,7 +33,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ hideAmounts }) => {
 
   // Load histories from localStorage on component mount
   useEffect(() => {
-    const savedHistory = localStorage.getItem('countNoteHistory');
+    const savedHistory = localStorage.getItem(`countNoteHistory_${selectedCurrency}`);
     if (savedHistory) {
       setHistory(JSON.parse(savedHistory));
     }
@@ -40,15 +42,20 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ hideAmounts }) => {
     if (savedCalcHistory) {
       setCalculatorHistory(JSON.parse(savedCalcHistory));
     }
-  }, []);
+  }, [selectedCurrency]);
 
   const formatAmount = (amount: number) => {
-    return hideAmounts ? '••••••' : amount.toLocaleString('en-IN');
+    if (hideAmounts) return '••••••';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: selectedCurrency,
+      minimumFractionDigits: selectedCurrency === 'USD' ? 2 : 0,
+    }).format(amount);
   };
 
   // Save current counts to history
   const saveCurrentToHistory = () => {
-    const currentCounts = localStorage.getItem('denominationCounts');
+    const currentCounts = localStorage.getItem(`denominationCounts_${selectedCurrency}`);
     if (!currentCounts) return;
     
     const counts = JSON.parse(currentCounts);
@@ -71,6 +78,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ hideAmounts }) => {
       totalAmount,
       totalCount,
       denominationCounts: counts,
+      currency: selectedCurrency,
       note: note.trim() || undefined
     };
     
@@ -79,7 +87,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ hideAmounts }) => {
     setHistory(updatedHistory);
     
     // Save to localStorage
-    localStorage.setItem('countNoteHistory', JSON.stringify(updatedHistory));
+    localStorage.setItem(`countNoteHistory_${selectedCurrency}`, JSON.stringify(updatedHistory));
     
     // Reset note
     setNote('');
@@ -90,7 +98,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ hideAmounts }) => {
     if (window.confirm('Are you sure you want to delete this history entry?')) {
       const updatedHistory = history.filter(entry => entry.id !== id);
       setHistory(updatedHistory);
-      localStorage.setItem('countNoteHistory', JSON.stringify(updatedHistory));
+      localStorage.setItem(`countNoteHistory_${selectedCurrency}`, JSON.stringify(updatedHistory));
       
       if (selectedEntry?.id === id) {
         setSelectedEntry(null);
@@ -112,7 +120,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ hideAmounts }) => {
       if (window.confirm('Are you sure you want to clear all money counting history? This cannot be undone.')) {
         setHistory([]);
         setSelectedEntry(null);
-        localStorage.removeItem('countNoteHistory');
+        localStorage.removeItem(`countNoteHistory_${selectedCurrency}`);
       }
     } else {
       clearCalculatorHistory();
@@ -122,7 +130,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ hideAmounts }) => {
   // Load history entry to current counter
   const loadHistoryEntry = (entry: HistoryEntry) => {
     if (window.confirm('This will replace your current counts. Continue?')) {
-      localStorage.setItem('denominationCounts', JSON.stringify(entry.denominationCounts));
+      localStorage.setItem(`denominationCounts_${selectedCurrency}`, JSON.stringify(entry.denominationCounts));
       window.location.reload(); // Reload to update the counter
     }
   };
@@ -135,15 +143,19 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ hideAmounts }) => {
   // Format denomination for display
   const formatDenomination = (value: number, count: number) => {
     const type = value <= 2 ? 'coin' : 'note';
+    const CurrencyIcon = selectedCurrency === 'INR' ? IndianRupee : DollarSign;
     return (
       <div key={value} className="flex justify-between py-1 border-b border-gray-200">
-        <div>
-          <span className="font-medium">₹{value}</span> {type}
+        <div className="flex items-center">
+          <CurrencyIcon size={14} className="mr-1" />
+          <span className="font-medium">{value}</span> {type}
         </div>
         <div>× {count}</div>
       </div>
     );
   };
+
+  const CurrencyIcon = selectedCurrency === 'INR' ? IndianRupee : DollarSign;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -161,7 +173,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ hideAmounts }) => {
                 onClick={() => setActiveHistoryType('money')}
               >
                 <div className="flex items-center">
-                  <IndianRupee className="mr-2" size={18} />
+                  <CurrencyIcon className="mr-2" size={18} />
                   Money History
                 </div>
               </button>
@@ -239,11 +251,11 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ hideAmounts }) => {
                         </div>
                         <div className="text-right">
                           <div className="font-bold text-indigo-600 flex items-center justify-end">
-                            <IndianRupee size={16} className="mr-1" />
+                            <CurrencyIcon size={16} className="mr-1" />
                             {formatAmount(entry.totalAmount)}
                           </div>
                           <div className="text-sm text-gray-600">
-                            {formatAmount(entry.totalCount)} items
+                            {entry.totalCount} items
                           </div>
                         </div>
                       </div>
@@ -311,14 +323,14 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ hideAmounts }) => {
                 <div className="bg-indigo-50 p-3 rounded-lg">
                   <div className="text-sm text-gray-600">Total Count</div>
                   <div className="text-2xl font-bold text-indigo-600">
-                    {formatAmount(selectedEntry.totalCount)}
+                    {selectedEntry.totalCount}
                   </div>
                 </div>
                 
                 <div className="bg-indigo-50 p-3 rounded-lg">
                   <div className="text-sm text-gray-600">Total Amount</div>
                   <div className="text-2xl font-bold text-indigo-600 flex items-center">
-                    <IndianRupee className="mr-1" size={20} />
+                    <CurrencyIcon className="mr-1" size={20} />
                     {formatAmount(selectedEntry.totalAmount)}
                   </div>
                 </div>
