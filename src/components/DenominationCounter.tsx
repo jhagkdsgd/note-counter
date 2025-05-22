@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IndianRupee, Plus, Minus } from 'lucide-react';
+import { IndianRupee, Plus, Minus, DollarSign } from 'lucide-react';
 
 interface DenominationCounterProps {
   value: number;
@@ -7,6 +7,7 @@ interface DenominationCounterProps {
   count: number;
   onCountChange: (count: number) => void;
   hideAmount: boolean;
+  currency: 'INR' | 'USD';
 }
 
 const DenominationCounter: React.FC<DenominationCounterProps> = ({
@@ -15,6 +16,7 @@ const DenominationCounter: React.FC<DenominationCounterProps> = ({
   count,
   onCountChange,
   hideAmount,
+  currency
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [inputValue, setInputValue] = useState(count.toString());
@@ -33,6 +35,7 @@ const DenominationCounter: React.FC<DenominationCounterProps> = ({
 
   const evaluateExpression = (expression: string): number => {
     // Remove all spaces
+    
     expression = expression.replace(/\s/g, '');
     
     // If it starts with + or -, prepend the current count
@@ -78,14 +81,20 @@ const DenominationCounter: React.FC<DenominationCounterProps> = ({
 
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     setIsFocused(true);
-    if (count === 0) {
-      setInputValue('');
-    }
+    e.target.select(); // Select all text when focused
   };
 
-  const handleBlur = () => {
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     setIsFocused(false);
-    const result = evaluateExpression(inputValue);
+    const currentValue = e.target.value.trim();
+    
+    // If the input is empty, reset to the current count
+    if (!currentValue) {
+      setInputValue(count.toString());
+      return;
+    }
+    
+    const result = evaluateExpression(currentValue);
     onCountChange(result);
     setInputValue(result.toString());
   };
@@ -109,16 +118,27 @@ const DenominationCounter: React.FC<DenominationCounterProps> = ({
     }
   };
 
+  const formatAmount = (amount: number) => {
+    if (hideAmount) return '••••••';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: currency === 'USD' ? 2 : 0,
+    }).format(amount);
+  };
+
+  const CurrencyIcon = currency === 'INR' ? IndianRupee : DollarSign;
+
   return (
     <div className={`${getBgColor()} rounded-lg p-3 shadow-sm`}>
       <div className="flex justify-between items-center">
         <div className="flex items-center">
-          <IndianRupee size={18} className="mr-1" />
+          <CurrencyIcon size={18} className="mr-1" />
           <span className="font-bold text-lg">{value}</span>
           <span className="ml-2 text-sm text-gray-600 capitalize">{type}</span>
         </div>
         <div className="text-sm font-medium">
-          Total: <IndianRupee size={14} className="inline" /> {hideAmount ? '••••••' : (value * count).toLocaleString('en-IN')}
+          Total: <CurrencyIcon size={14} className="inline" /> {formatAmount(value * count)}
         </div>
       </div>
       

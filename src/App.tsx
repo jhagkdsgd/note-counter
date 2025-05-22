@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { IndianRupee, Menu, Github, Globe, History, Calculator, Save, Eye, EyeOff, HelpCircle, X, Mail, Heart } from 'lucide-react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { IndianRupee, Menu, Github, Globe, History, Calculator, Save, Eye, EyeOff, HelpCircle, X, Mail, Heart, DollarSign } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import DenominationCounter from './components/DenominationCounter';
 import HistoryTab from './components/HistoryTab';
@@ -9,17 +9,32 @@ import Advertisement from './components/Advertisement';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 
-const DENOMINATIONS = [
-  { value: 500, type: 'note' },
-  { value: 200, type: 'note' },
-  { value: 100, type: 'note' },
-  { value: 50, type: 'note' },
-  { value: 20, type: 'note' },
-  { value: 10, type: 'note' },
-  { value: 5, type: 'note' },
-  { value: 2, type: 'coin' },
-  { value: 1, type: 'coin' },
-];
+const CURRENCY_DENOMINATIONS = {
+  INR: [
+    { value: 500, type: 'note' },
+    { value: 200, type: 'note' },
+    { value: 100, type: 'note' },
+    { value: 50, type: 'note' },
+    { value: 20, type: 'note' },
+    { value: 10, type: 'note' },
+    { value: 5, type: 'note' },
+    { value: 2, type: 'coin' },
+    { value: 1, type: 'coin' },
+  ],
+  USD: [
+    { value: 100, type: 'note' },
+    { value: 50, type: 'note' },
+    { value: 20, type: 'note' },
+    { value: 10, type: 'note' },
+    { value: 5, type: 'note' },
+    { value: 2, type: 'note' },
+    { value: 1, type: 'note' },
+    { value: 0.25, type: 'coin' }, // Quarter
+    { value: 0.10, type: 'coin' }, // Dime
+    { value: 0.05, type: 'coin' }, // Nickel
+    { value: 0.01, type: 'coin' }, // Penny
+  ]
+};
 
 interface CountState {
   [key: number]: number;
@@ -32,18 +47,33 @@ function App() {
   const [hideAmounts, setHideAmounts] = useState(false);
   const [showDocs, setShowDocs] = useState(false);
   const [showAdInquiry, setShowAdInquiry] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState<'INR' | 'USD'>('INR');
   const [counts, setCounts] = useState<CountState>(() => {
-    const savedCounts = localStorage.getItem('denominationCounts');
+    const savedCounts = localStorage.getItem(`denominationCounts_${selectedCurrency}`);
     if (savedCounts) {
       return JSON.parse(savedCounts);
     }
     
     const initialCounts: CountState = {};
-    DENOMINATIONS.forEach(denom => {
+    CURRENCY_DENOMINATIONS[selectedCurrency].forEach(denom => {
       initialCounts[denom.value] = 0;
     });
     return initialCounts;
   });
+
+  // Effect to handle currency change
+  useEffect(() => {
+    const savedCounts = localStorage.getItem(`denominationCounts_${selectedCurrency}`);
+    if (savedCounts) {
+      setCounts(JSON.parse(savedCounts));
+    } else {
+      const initialCounts: CountState = {};
+      CURRENCY_DENOMINATIONS[selectedCurrency].forEach(denom => {
+        initialCounts[denom.value] = 0;
+      });
+      setCounts(initialCounts);
+    }
+  }, [selectedCurrency]);
 
   const totalAmount = Object.entries(counts).reduce(
     (sum, [denomination, count]) => sum + (Number(denomination) * count), 
@@ -56,10 +86,11 @@ function App() {
   );
 
   useEffect(() => {
-    localStorage.setItem('denominationCounts', JSON.stringify(counts));
-  }, [counts]);
+    localStorage.setItem(`denominationCounts_${selectedCurrency}`, JSON.stringify(counts));
+  }, [counts, selectedCurrency]);
 
   const handleCountChange = (denomination: number, count: number) => {
+    if (isNaN(count)) return; // Prevent NaN values
     setCounts(prev => ({
       ...prev,
       [denomination]: count
@@ -69,7 +100,7 @@ function App() {
   const handleReset = () => {
     if (window.confirm('Are you sure you want to reset all counts?')) {
       const resetCounts: CountState = {};
-      DENOMINATIONS.forEach(denom => {
+      CURRENCY_DENOMINATIONS[selectedCurrency].forEach(denom => {
         resetCounts[denom.value] = 0;
       });
       setCounts(resetCounts);
@@ -77,7 +108,7 @@ function App() {
   };
 
   const handleSave = () => {
-    const currentCounts = localStorage.getItem('denominationCounts');
+    const currentCounts = localStorage.getItem(`denominationCounts_${selectedCurrency}`);
     if (!currentCounts) return;
     
     const counts = JSON.parse(currentCounts);
@@ -92,7 +123,7 @@ function App() {
       0
     );
     
-    const savedHistory = localStorage.getItem('countNoteHistory') || '[]';
+    const savedHistory = localStorage.getItem(`countNoteHistory_${selectedCurrency}`) || '[]';
     const history = JSON.parse(savedHistory);
     
     const newEntry = {
@@ -100,11 +131,12 @@ function App() {
       date: new Date().toLocaleString(),
       totalAmount,
       totalCount,
-      denominationCounts: counts
+      denominationCounts: counts,
+      currency: selectedCurrency
     };
     
     const updatedHistory = [newEntry, ...history];
-    localStorage.setItem('countNoteHistory', JSON.stringify(updatedHistory));
+    localStorage.setItem(`countNoteHistory_${selectedCurrency}`, JSON.stringify(updatedHistory));
     
     alert('Summary saved successfully!');
   };
@@ -120,14 +152,12 @@ function App() {
     };
 
     try {
-      // Save to Supabase
       const { error } = await supabase
         .from('ad_inquiries')
         .insert([data]);
 
       if (error) throw error;
 
-      // Open email client with pre-filled content
       const subject = encodeURIComponent('Advertisement Inquiry - Count Note Pro');
       const body = encodeURIComponent(`
 Name: ${data.name}
@@ -145,12 +175,19 @@ ${data.message}
     }
   };
 
-  const leftColumnDenominations = DENOMINATIONS.slice(0, 5);
-  const rightColumnDenominations = DENOMINATIONS.slice(5);
+  const leftColumnDenominations = CURRENCY_DENOMINATIONS[selectedCurrency].slice(0, Math.ceil(CURRENCY_DENOMINATIONS[selectedCurrency].length / 2));
+  const rightColumnDenominations = CURRENCY_DENOMINATIONS[selectedCurrency].slice(Math.ceil(CURRENCY_DENOMINATIONS[selectedCurrency].length / 2));
 
   const formatAmount = (amount: number) => {
-    return hideAmounts ? '••••••' : amount.toLocaleString('en-IN');
+    if (hideAmounts) return '••••••';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: selectedCurrency,
+      minimumFractionDigits: selectedCurrency === 'USD' ? 2 : 0,
+    }).format(amount);
   };
+
+  const CurrencyIcon = selectedCurrency === 'INR' ? IndianRupee : DollarSign;
 
   const AdInquiryModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -248,7 +285,7 @@ ${data.message}
             <header className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white p-4 shadow-lg">
               <div className="container mx-auto flex justify-between items-center">
                 <h1 className="text-2xl font-bold flex items-center">
-                  <IndianRupee className="mr-2" />
+                  <CurrencyIcon className="mr-2" />
                   Count Note Pro
                 </h1>
                 <div className="md:hidden">
@@ -260,6 +297,14 @@ ${data.message}
                   </button>
                 </div>
                 <div className="hidden md:flex space-x-4 items-center">
+                  <select
+                    value={selectedCurrency}
+                    onChange={(e) => setSelectedCurrency(e.target.value as 'INR' | 'USD')}
+                    className="bg-white text-indigo-600 px-3 py-1 rounded-md font-medium"
+                  >
+                    <option value="INR">INR (₹)</option>
+                    <option value="USD">USD ($)</option>
+                  </select>
                   <button
                     className={`py-2 px-4 rounded-md font-medium transition-all ${
                       activeTab === 'counter'
@@ -269,7 +314,7 @@ ${data.message}
                     onClick={() => setActiveTab('counter')}
                   >
                     <div className="flex items-center">
-                      <IndianRupee className="mr-2" size={18} />
+                      <CurrencyIcon className="mr-2" size={18} />
                       Money Counter
                     </div>
                   </button>
@@ -300,6 +345,14 @@ ${data.message}
             {mobileMenuOpen && (
               <div className="md:hidden bg-indigo-500 text-white">
                 <div className="container mx-auto p-2">
+                  <select
+                    value={selectedCurrency}
+                    onChange={(e) => setSelectedCurrency(e.target.value as 'INR' | 'USD')}
+                    className="w-full mb-2 bg-white text-indigo-600 px-3 py-2 rounded-md font-medium"
+                  >
+                    <option value="INR">INR (₹)</option>
+                    <option value="USD">USD ($)</option>
+                  </select>
                   <button
                     className={`w-full py-2 px-4 rounded-md font-medium mb-2 transition-all ${
                       activeTab === 'counter'
@@ -312,7 +365,7 @@ ${data.message}
                     }}
                   >
                     <div className="flex items-center">
-                      <IndianRupee className="mr-2" size={18} />
+                      <CurrencyIcon className="mr-2" size={18} />
                       Money Counter
                     </div>
                   </button>
@@ -363,6 +416,18 @@ ${data.message}
                     </div>
                     
                     <div className="space-y-6">
+                      <section>
+                        <h3 className="text-xl font-semibold text-gray-700 mb-2">Currency Support</h3>
+                        <p className="text-gray-600 mb-2">
+                          Count Note Pro supports multiple currencies:
+                        </p>
+                        <ul className="list-disc list-inside space-y-1 text-gray-600">
+                          <li>Switch between INR and USD from the currency selector</li>
+                          <li>Each currency maintains its own separate history</li>
+                          <li>Automatic formatting based on currency selection</li>
+                        </ul>
+                      </section>
+
                       <section>
                         <h3 className="text-xl font-semibold text-gray-700 mb-2">Quick Math Input</h3>
                         <p className="text-gray-600 mb-2">
@@ -470,6 +535,7 @@ ${data.message}
                             count={counts[denom.value] || 0}
                             onCountChange={(count) => handleCountChange(denom.value, count)}
                             hideAmount={hideAmounts}
+                            currency={selectedCurrency}
                           />
                         ))}
                       </div>
@@ -488,6 +554,7 @@ ${data.message}
                             count={counts[denom.value] || 0}
                             onCountChange={(count) => handleCountChange(denom.value, count)}
                             hideAmount={hideAmounts}
+                            currency={selectedCurrency}
                           />
                         ))}
                       </div>
@@ -502,14 +569,14 @@ ${data.message}
                         <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-100">
                           <h3 className="text-lg font-medium text-gray-700">Total Count</h3>
                           <p className="text-3xl font-bold text-indigo-600">
-                            {formatAmount(totalCount)}
+                            {totalCount}
                           </p>
                         </div>
                         
                         <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-100">
                           <h3 className="text-lg font-medium text-gray-700">Total Amount</h3>
                           <p className="text-3xl font-bold text-indigo-600 flex items-center">
-                            <IndianRupee className="mr-1" size={24} />
+                            <CurrencyIcon className="mr-1" size={24} />
                             {formatAmount(totalAmount)}
                           </p>
                         </div>
@@ -555,7 +622,7 @@ ${data.message}
                   </div>
                 </div>
               ) : (
-                <HistoryTab hideAmounts={hideAmounts} />
+                <HistoryTab hideAmounts={hideAmounts} selectedCurrency={selectedCurrency} />
               )}
             </div>
 
