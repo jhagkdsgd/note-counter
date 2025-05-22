@@ -109,24 +109,31 @@ const DenominationCounter: React.FC<DenominationCounterProps> = ({
     }
   };
 
-  const formatDenomination = (value: number, currency: string) => {
+  const formatValue = (value: number) => {
     if (currency === 'USD' && value < 1) {
       return `${value * 100}¢`;
     }
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: currency === 'USD' ? 2 : 0,
-    }).format(value);
+    return value.toString();
   };
 
-  const formatAmount = (amount: number) => {
+  const formatTotal = (amount: number) => {
     if (hideAmount) return '••••••';
-    return new Intl.NumberFormat('en-US', {
+    
+    if (currency === 'USD') {
+      if (amount < 1) {
+        return `${(amount * 100).toFixed(0)}¢`;
+      }
+      return amount.toLocaleString('en-US', {
+        style: 'currency',
+        currency: 'USD',
+      });
+    }
+    
+    return amount.toLocaleString('en-IN', {
+      maximumFractionDigits: 0,
       style: 'currency',
-      currency: currency,
-      minimumFractionDigits: currency === 'USD' ? 2 : 0,
-    }).format(amount);
+      currency: 'INR',
+    });
   };
 
   const CurrencyIcon = currency === 'INR' ? IndianRupee : DollarSign;
@@ -135,14 +142,12 @@ const DenominationCounter: React.FC<DenominationCounterProps> = ({
     <div className={`${getBgColor()} rounded-lg p-3 shadow-sm`}>
       <div className="flex justify-between items-center">
         <div className="flex items-center">
-          {value >= 1 && <CurrencyIcon size={18} className="mr-1" />}
-          <span className="font-bold text-lg">
-            {currency === 'USD' && value < 1 ? `${value * 100}¢` : value}
-          </span>
+          {(currency === 'USD' ? value >= 1 : true) && <CurrencyIcon size={18} className="mr-1" />}
+          <span className="font-bold text-lg">{formatValue(value)}</span>
           <span className="ml-2 text-sm text-gray-600 capitalize">{type}</span>
         </div>
         <div className="text-sm font-medium">
-          Total: {formatAmount(value * count)}
+          Total: {formatTotal(value * count)}
         </div>
       </div>
       
