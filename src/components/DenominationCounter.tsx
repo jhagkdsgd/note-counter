@@ -34,22 +34,18 @@ const DenominationCounter: React.FC<DenominationCounterProps> = ({
   };
 
   const evaluateExpression = (expression: string): number => {
-    // Remove all spaces
-    
     expression = expression.replace(/\s/g, '');
     
-    // If it starts with + or -, prepend the current count
     if (expression.startsWith('+') || expression.startsWith('-')) {
       expression = count + expression;
     }
     
     try {
-      // Safely evaluate the expression
       // eslint-disable-next-line no-new-func
       const result = new Function('return ' + expression)();
-      return Math.floor(Math.abs(result)); // Ensure positive integer
+      return Math.floor(Math.abs(result));
     } catch (error) {
-      return count; // Return current count if evaluation fails
+      return count;
     }
   };
 
@@ -57,13 +53,10 @@ const DenominationCounter: React.FC<DenominationCounterProps> = ({
     const value = e.target.value;
     setInputValue(value);
 
-    // Check if the input contains math operators
     if (/[+\-]/.test(value)) {
-      // Don't update the count yet, wait for blur or enter
       return;
     }
 
-    // For regular number input
     const newValue = parseInt(value);
     if (!isNaN(newValue) && newValue >= 0) {
       onCountChange(newValue);
@@ -81,14 +74,13 @@ const DenominationCounter: React.FC<DenominationCounterProps> = ({
 
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     setIsFocused(true);
-    e.target.select(); // Select all text when focused
+    e.target.select();
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     setIsFocused(false);
     const currentValue = e.target.value.trim();
     
-    // If the input is empty, reset to the current count
     if (!currentValue) {
       setInputValue(count.toString());
       return;
@@ -99,7 +91,6 @@ const DenominationCounter: React.FC<DenominationCounterProps> = ({
     setInputValue(result.toString());
   };
 
-  // Determine background color based on denomination
   const getBgColor = () => {
     if (type === 'coin') {
       return 'bg-yellow-100';
@@ -118,13 +109,31 @@ const DenominationCounter: React.FC<DenominationCounterProps> = ({
     }
   };
 
-  const formatAmount = (amount: number) => {
+  const formatValue = (value: number) => {
+    if (currency === 'USD' && value < 1) {
+      return `${value * 100}¢`;
+    }
+    return value.toString();
+  };
+
+  const formatTotal = (amount: number) => {
     if (hideAmount) return '••••••';
-    return new Intl.NumberFormat('en-US', {
+    
+    if (currency === 'USD') {
+      if (amount < 1) {
+        return `${(amount * 100).toFixed(0)}¢`;
+      }
+      return amount.toLocaleString('en-US', {
+        style: 'currency',
+        currency: 'USD',
+      });
+    }
+    
+    return amount.toLocaleString('en-IN', {
+      maximumFractionDigits: 0,
       style: 'currency',
-      currency: currency,
-      minimumFractionDigits: currency === 'USD' ? 2 : 0,
-    }).format(amount);
+      currency: 'INR',
+    });
   };
 
   const CurrencyIcon = currency === 'INR' ? IndianRupee : DollarSign;
@@ -133,12 +142,12 @@ const DenominationCounter: React.FC<DenominationCounterProps> = ({
     <div className={`${getBgColor()} rounded-lg p-3 shadow-sm`}>
       <div className="flex justify-between items-center">
         <div className="flex items-center">
-          <CurrencyIcon size={18} className="mr-1" />
-          <span className="font-bold text-lg">{value}</span>
+          {(currency === 'USD' ? value >= 1 : true) && <CurrencyIcon size={18} className="mr-1" />}
+          <span className="font-bold text-lg">{formatValue(value)}</span>
           <span className="ml-2 text-sm text-gray-600 capitalize">{type}</span>
         </div>
         <div className="text-sm font-medium">
-          Total: <CurrencyIcon size={14} className="inline" /> {formatAmount(value * count)}
+          Total: {formatTotal(value * count)}
         </div>
       </div>
       

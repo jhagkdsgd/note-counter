@@ -27,7 +27,6 @@ const CURRENCY_DENOMINATIONS = {
     { value: 20, type: 'note' },
     { value: 10, type: 'note' },
     { value: 5, type: 'note' },
-    { value: 2, type: 'note' },
     { value: 1, type: 'note' },
     { value: 0.25, type: 'coin' }, // Quarter
     { value: 0.10, type: 'coin' }, // Dime
