@@ -574,8 +574,7 @@ ${data.message}
                         
                         <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-100">
                           <h3 className="text-lg font-medium text-gray-700">Total Amount</h3>
-                          <p className="text-3xl font-bold text-indigo-600 flex items-center">
-                            <CurrencyIcon className="mr-1" size={24} />
+                          <p className="text-3xl font-bold text-indigo-600">
                             {formatAmount(totalAmount)}
                           </p>
                         </div>
