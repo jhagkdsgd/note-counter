@@ -119,21 +119,11 @@ const DenominationCounter: React.FC<DenominationCounterProps> = ({
   const formatTotal = (amount: number) => {
     if (hideAmount) return '••••••';
     
-    if (currency === 'USD') {
-      if (amount < 1) {
-        return `${(amount * 100).toFixed(0)}¢`;
-      }
-      return amount.toLocaleString('en-US', {
-        style: 'currency',
-        currency: 'USD',
-      });
-    }
-    
-    return amount.toLocaleString('en-IN', {
-      maximumFractionDigits: 0,
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'INR',
-    });
+      currency: currency,
+      minimumFractionDigits: currency === 'USD' ? 2 : 0,
+    }).format(amount);
   };
 
   const CurrencyIcon = currency === 'INR' ? IndianRupee : DollarSign;
