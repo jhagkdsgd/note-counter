@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { IndianRupee, Menu, Github, Globe, History, Calculator, Save, Eye, EyeOff, HelpCircle, X, Mail, Heart, DollarSign } from 'lucide-react';
+import { IndianRupee, Menu, Github, Globe, History, Calculator, Save, Eye, EyeOff, X, Mail, Heart, DollarSign, MenuIcon } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import DenominationCounter from './components/DenominationCounter';
 import HistoryTab from './components/HistoryTab';
@@ -28,10 +28,10 @@ const CURRENCY_DENOMINATIONS = {
     { value: 10, type: 'note' },
     { value: 5, type: 'note' },
     { value: 1, type: 'note' },
-    { value: 0.25, type: 'coin' }, // Quarter
-    { value: 0.10, type: 'coin' }, // Dime
-    { value: 0.05, type: 'coin' }, // Nickel
-    { value: 0.01, type: 'coin' }, // Penny
+    { value: 0.25, type: 'coin' },
+    { value: 0.10, type: 'coin' },
+    { value: 0.05, type: 'coin' },
+    { value: 0.01, type: 'coin' },
   ]
 };
 
@@ -44,7 +44,7 @@ function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sendToCalculator, setSendToCalculator] = useState(false);
   const [hideAmounts, setHideAmounts] = useState(false);
-  const [showDocs, setShowDocs] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const [showAdInquiry, setShowAdInquiry] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<'INR' | 'USD'>('INR');
   const [counts, setCounts] = useState<CountState>(() => {
@@ -60,7 +60,6 @@ function App() {
     return initialCounts;
   });
 
-  // Effect to handle currency change
   useEffect(() => {
     const savedCounts = localStorage.getItem(`denominationCounts_${selectedCurrency}`);
     if (savedCounts) {
@@ -89,7 +88,7 @@ function App() {
   }, [counts, selectedCurrency]);
 
   const handleCountChange = (denomination: number, count: number) => {
-    if (isNaN(count)) return; // Prevent NaN values
+    if (isNaN(count)) return;
     setCounts(prev => ({
       ...prev,
       [denomination]: count
@@ -274,6 +273,98 @@ ${data.message}
     </div>
   );
 
+  const MenuModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold text-gray-800">Menu</h2>
+            <button
+              onClick={() => setShowMenu(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X size={24} />
+            </button>
+          </div>
+          
+          <div className="space-y-6">
+            <section>
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">Documentation</h3>
+              <div className="space-y-4">
+                <section>
+                  <h4 className="text-lg font-medium text-gray-700 mb-2">Currency Support</h4>
+                  <p className="text-gray-600 mb-2">
+                    Count Note Pro supports multiple currencies:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-gray-600">
+                    <li>Switch between INR and USD from the currency selector</li>
+                    <li>Each currency maintains its own separate history</li>
+                    <li>Automatic formatting based on currency selection</li>
+                  </ul>
+                </section>
+
+                <section>
+                  <h4 className="text-lg font-medium text-gray-700 mb-2">Quick Math Input</h4>
+                  <ul className="list-disc list-inside space-y-1 text-gray-600">
+                    <li>Type <code className="bg-gray-100 px-1 rounded">+13</code> to add 13</li>
+                    <li>Type <code className="bg-gray-100 px-1 rounded">-5</code> to subtract 5</li>
+                    <li>Press Enter or click outside to calculate</li>
+                  </ul>
+                </section>
+
+                <section>
+                  <h4 className="text-lg font-medium text-gray-700 mb-2">Features</h4>
+                  <ul className="list-disc list-inside space-y-1 text-gray-600">
+                    <li>Hide amounts for privacy</li>
+                    <li>Save counts to history</li>
+                    <li>Built-in calculator</li>
+                    <li>Multiple currency support</li>
+                  </ul>
+                </section>
+              </div>
+            </section>
+
+            <section>
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">Contact & Feedback</h3>
+              <div className="space-y-4">
+                <a
+                  href="mailto:patilyasshh@gmail.com"
+                  className="block px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+                >
+                  <Mail className="inline-block mr-2" size={18} />
+                  Send Feedback
+                </a>
+                <a
+                  href="https://www.yashpatil.tech/more/contact.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+                >
+                  <Globe className="inline-block mr-2" size={18} />
+                  Contact Developer
+                </a>
+              </div>
+            </section>
+
+            <section>
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">Advertising</h3>
+              <button
+                onClick={() => {
+                  setShowMenu(false);
+                  setShowAdInquiry(true);
+                }}
+                className="w-full mt-2 bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors flex items-center justify-center"
+              >
+                <Mail size={18} className="mr-2" />
+                Advertise with Us
+              </button>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <Router>
       <Routes>
@@ -331,11 +422,11 @@ ${data.message}
                     </div>
                   </button>
                   <button
-                    onClick={() => setShowDocs(true)}
+                    onClick={() => setShowMenu(true)}
                     className="ml-2 p-2 rounded-full hover:bg-indigo-700/50 transition-colors"
-                    title="Documentation"
+                    title="Menu"
                   >
-                    <HelpCircle size={20} />
+                    <MenuIcon size={20} />
                   </button>
                 </div>
               </div>
@@ -386,128 +477,21 @@ ${data.message}
                   </button>
                   <button
                     onClick={() => {
-                      setShowDocs(true);
+                      setShowMenu(true);
                       setMobileMenuOpen(false);
                     }}
                     className="w-full py-2 px-4 rounded-md font-medium mb-2 text-white hover:bg-indigo-700/50"
                   >
                     <div className="flex items-center">
-                      <HelpCircle className="mr-2" size={18} />
-                      Documentation
+                      <MenuIcon className="mr-2" size={18} />
+                      Menu
                     </div>
                   </button>
                 </div>
               </div>
             )}
 
-            {showDocs && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-                  <div className="p-6">
-                    <div className="flex justify-between items-center mb-4">
-                      <h2 className="text-2xl font-bold text-gray-800">Documentation</h2>
-                      <button
-                        onClick={() => setShowDocs(false)}
-                        className="text-gray-500 hover:text-gray-700"
-                      >
-                        <X size={24} />
-                      </button>
-                    </div>
-                    
-                    <div className="space-y-6">
-                      <section>
-                        <h3 className="text-xl font-semibold text-gray-700 mb-2">Currency Support</h3>
-                        <p className="text-gray-600 mb-2">
-                          Count Note Pro supports multiple currencies:
-                        </p>
-                        <ul className="list-disc list-inside space-y-1 text-gray-600">
-                          <li>Switch between INR and USD from the currency selector</li>
-                          <li>Each currency maintains its own separate history</li>
-                          <li>Automatic formatting based on currency selection</li>
-                        </ul>
-                      </section>
-
-                      <section>
-                        <h3 className="text-xl font-semibold text-gray-700 mb-2">Quick Math Input</h3>
-                        <p className="text-gray-600 mb-2">
-                          You can perform quick calculations directly in the count input fields:
-                        </p>
-                        <ul className="list-disc list-inside space-y-1 text-gray-600">
-                          <li>Type <code className="bg-gray-100 px-1 rounded">+13</code> to add 13 to the current count</li>
-                          <li>Type <code className="bg-gray-100 px-1 rounded">-5</code> to subtract 5 from the current count</li>
-                          <li>Press Enter or click outside to calculate</li>
-                        </ul>
-                      </section>
-
-                      <section>
-                        <h3 className="text-xl font-semibold text-gray-700 mb-2">Privacy Features</h3>
-                        <p className="text-gray-600 mb-2">
-                          Keep your counts private with the hide amounts feature:
-                        </p>
-                        <ul className="list-disc list-inside space-y-1 text-gray-600">
-                          <li>Click the eye icon to toggle amount visibility</li>
-                          <li>Hides all amounts across the application</li>
-                          <li>Perfect for privacy in public settings</li>
-                        </ul>
-                      </section>
-
-                      <section>
-                        <h3 className="text-xl font-semibold text-gray-700 mb-2">Calculator Integration</h3>
-                        <p className="text-gray-600 mb-2">
-                          Use the built-in calculator for additional calculations:
-                        </p>
-                        <ul className="list-disc list-inside space-y-1 text-gray-600">
-                          <li>Check "Use total amount in calculator" to transfer the current total</li>
-                          <li>Supports basic arithmetic operations</li>
-                          <li>Maintains calculation history</li>
-                        </ul>
-                      </section>
-
-                      <section>
-                        <h3 className="text-xl font-semibold text-gray-700 mb-2">History & Saving</h3>
-                        <p className="text-gray-600 mb-2">
-                          Keep track of your counts:
-                        </p>
-                        <ul className="list-disc list-inside space-y-1 text-gray-600">
-                          <li>Click "Save" to store the current count</li>
-                          <li>View past counts in the History tab</li>
-                          <li>Load previous counts when needed</li>
-                          <li>All data is stored locally on your device</li>
-                        </ul>
-                      </section>
-
-                      <section>
-                        <h3 className="text-xl font-semibold text-gray-700 mb-2">Tips & Shortcuts</h3>
-                        <ul className="list-disc list-inside space-y-1 text-gray-600">
-                          <li>Use the + and - buttons for quick adjustments</li>
-                          <li>Press Enter after typing to confirm input</li>
-                          <li>Click Reset to start fresh (requires confirmation)</li>
-                          <li>All changes are automatically saved</li>
-                        </ul>
-                      </section>
-
-                      <section>
-                        <h3 className="text-xl font-semibold text-gray-700 mb-2">Advertising</h3>
-                        <p className="text-gray-600 mb-2">
-                          Interested in advertising on Count Note Pro?
-                        </p>
-                        <button
-                          onClick={() => {
-                            setShowDocs(false);
-                            setShowAdInquiry(true);
-                          }}
-                          className="mt-2 bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors flex items-center"
-                        >
-                          <Mail size={18} className="mr-2" />
-                          Contact for Advertising
-                        </button>
-                      </section>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
+            {showMenu && <MenuModal />}
             {showAdInquiry && <AdInquiryModal />}
 
             <div className="container mx-auto p-4">
