@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { IndianRupee, Menu, Github, Globe, History, Calculator, Save, Eye, EyeOff, X, Mail, Heart, DollarSign, MenuIcon } from 'lucide-react';
+import { IndianRupee, Menu, Github, Globe, History, Calculator, Save, Eye, EyeOff, X, Mail, Heart, DollarSign, MenuIcon, FileText, HelpCircle, MessageSquare } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import DenominationCounter from './components/DenominationCounter';
 import HistoryTab from './components/HistoryTab';
@@ -275,7 +275,7 @@ ${data.message}
 
   const MenuModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold text-gray-800">Menu</h2>
@@ -287,78 +287,59 @@ ${data.message}
             </button>
           </div>
           
-          <div className="space-y-6">
-            <section>
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">Documentation</h3>
-              <div className="space-y-4">
-                <section>
-                  <h4 className="text-lg font-medium text-gray-700 mb-2">Currency Support</h4>
-                  <p className="text-gray-600 mb-2">
-                    Count Note Pro supports multiple currencies:
-                  </p>
-                  <ul className="list-disc list-inside space-y-1 text-gray-600">
-                    <li>Switch between INR and USD from the currency selector</li>
-                    <li>Each currency maintains its own separate history</li>
-                    <li>Automatic formatting based on currency selection</li>
-                  </ul>
-                </section>
+          <div className="space-y-2">
+            <button
+              onClick={() => {
+                setShowMenu(false);
+                // Add documentation modal state and handler
+              }}
+              className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center"
+            >
+              <FileText className="mr-3" size={20} />
+              Documentation
+            </button>
 
-                <section>
-                  <h4 className="text-lg font-medium text-gray-700 mb-2">Quick Math Input</h4>
-                  <ul className="list-disc list-inside space-y-1 text-gray-600">
-                    <li>Type <code className="bg-gray-100 px-1 rounded">+13</code> to add 13</li>
-                    <li>Type <code className="bg-gray-100 px-1 rounded">-5</code> to subtract 5</li>
-                    <li>Press Enter or click outside to calculate</li>
-                  </ul>
-                </section>
+            <button
+              onClick={() => {
+                setShowMenu(false);
+                // Add terms modal state and handler
+              }}
+              className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center"
+            >
+              <FileText className="mr-3" size={20} />
+              Terms & Conditions
+            </button>
 
-                <section>
-                  <h4 className="text-lg font-medium text-gray-700 mb-2">Features</h4>
-                  <ul className="list-disc list-inside space-y-1 text-gray-600">
-                    <li>Hide amounts for privacy</li>
-                    <li>Save counts to history</li>
-                    <li>Built-in calculator</li>
-                    <li>Multiple currency support</li>
-                  </ul>
-                </section>
-              </div>
-            </section>
+            <button
+              onClick={() => {
+                window.location.href = 'mailto:patilyasshh@gmail.com';
+              }}
+              className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center"
+            >
+              <MessageSquare className="mr-3" size={20} />
+              Send Feedback
+            </button>
 
-            <section>
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">Contact & Feedback</h3>
-              <div className="space-y-4">
-                <a
-                  href="mailto:patilyasshh@gmail.com"
-                  className="block px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
-                >
-                  <Mail className="inline-block mr-2" size={18} />
-                  Send Feedback
-                </a>
-                <a
-                  href="https://www.yashpatil.tech/more/contact.html"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
-                >
-                  <Globe className="inline-block mr-2" size={18} />
-                  Contact Developer
-                </a>
-              </div>
-            </section>
+            <button
+              onClick={() => {
+                window.open('https://www.yashpatil.tech/more/contact.html', '_blank');
+              }}
+              className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center"
+            >
+              <HelpCircle className="mr-3" size={20} />
+              Contact Us
+            </button>
 
-            <section>
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">Advertising</h3>
-              <button
-                onClick={() => {
-                  setShowMenu(false);
-                  setShowAdInquiry(true);
-                }}
-                className="w-full mt-2 bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors flex items-center justify-center"
-              >
-                <Mail size={18} className="mr-2" />
-                Advertise with Us
-              </button>
-            </section>
+            <button
+              onClick={() => {
+                setShowMenu(false);
+                setShowAdInquiry(true);
+              }}
+              className="w-full text-left px-4 py-3 rounded-lg bg-indigo-50 hover:bg-indigo-100 transition-colors flex items-center text-indigo-600"
+            >
+              <Mail className="mr-3" size={20} />
+              Advertise with Us
+            </button>
           </div>
         </div>
       </div>
