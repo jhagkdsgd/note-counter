@@ -652,5 +652,3 @@ ${data.message}
 }
 
 export default App;
-
-export default App
