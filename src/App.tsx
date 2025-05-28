@@ -63,8 +63,6 @@ function App() {
     return initialCounts;
   });
 
-  // ... (rest of the existing state and handlers remain unchanged)
-
   const MenuModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
@@ -145,7 +143,94 @@ function App() {
       <Route path="/documentation" element={<Documentation />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="*" element={
-        // ... (rest of the existing App component content remains unchanged)
+        <div className="min-h-screen bg-gray-50">
+          {showMenu && <MenuModal />}
+          {showAdInquiry && <Advertisement onClose={() => setShowAdInquiry(false)} />}
+          
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex flex-col space-y-8">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-4">
+                  <button
+                    onClick={() => setSelectedCurrency(prev => prev === 'INR' ? 'USD' : 'INR')}
+                    className="flex items-center space-x-2 px-4 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    {selectedCurrency === 'INR' ? <IndianRupee size={20} /> : <DollarSign size={20} />}
+                    <span>{selectedCurrency}</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => setHideAmounts(!hideAmounts)}
+                    className="p-2 text-gray-600 hover:text-gray-800"
+                  >
+                    {hideAmounts ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+
+                <div className="flex items-center space-x-4">
+                  <button
+                    onClick={() => setShowMenu(true)}
+                    className="p-2 text-gray-600 hover:text-gray-800"
+                  >
+                    <Menu size={20} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div className="border-b border-gray-200">
+                  <div className="flex">
+                    <button
+                      onClick={() => setActiveTab('counter')}
+                      className={`flex-1 px-6 py-4 text-center ${
+                        activeTab === 'counter'
+                          ? 'border-b-2 border-indigo-500 text-indigo-600'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      <Calculator className="inline-block mr-2" size={20} />
+                      Counter
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('history')}
+                      className={`flex-1 px-6 py-4 text-center ${
+                        activeTab === 'history'
+                          ? 'border-b-2 border-indigo-500 text-indigo-600'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      <History className="inline-block mr-2" size={20} />
+                      History
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-6">
+                  {activeTab === 'counter' ? (
+                    <DenominationCounter
+                      denominations={CURRENCY_DENOMINATIONS[selectedCurrency]}
+                      counts={counts}
+                      setCounts={setCounts}
+                      hideAmounts={hideAmounts}
+                      sendToCalculator={sendToCalculator}
+                      setSendToCalculator={setSendToCalculator}
+                    />
+                  ) : (
+                    <HistoryTab currency={selectedCurrency} />
+                  )}
+                </div>
+              </div>
+
+              {activeTab === 'counter' && (
+                <SimpleCalculator
+                  counts={counts}
+                  denominations={CURRENCY_DENOMINATIONS[selectedCurrency]}
+                  hideAmounts={hideAmounts}
+                />
+              )}
+            </div>
+          </div>
+        </div>
       } />
     </Routes>
   );
